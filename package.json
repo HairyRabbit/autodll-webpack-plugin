@@ -1,0 +1,52 @@
+{
+    "name": "@rabbitcc/autodll-webpack-plugin",
+    "version": "0.0.1",
+    "description": "Make dll first",
+    "main": "dist/index.js",
+    "scripts": {
+        "start": "yarn build && yarn test:spec",
+        "test": "jest",
+        "typed": "flow",
+        "checkall": "yarn test && yarn typed",
+        "build:umd": "cross-env NODE_ENV=development rollup -c",
+        "build:umd:min": "cross-env NODE_ENV=production rollup -c",
+        "build:libdefs": "flow gen-flow-files lib/index.js > dist/umd-extra.js.flow",
+        "test:spec": "webpack --config=tests/specs/basic/webpack.config.js --watch",
+        "build": "webpack"
+    },
+    "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
+    "keywords": [],
+    "author": "HairyRabbit <yfhj1990@hotmail.com>",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/HairyRabbit/autodll-webpack-plugin/issues"
+    },
+    "homepage": "https://github.com/HairyRabbit/autodll-webpack-plugin#readme",
+    "devDependencies": {
+        "@babel/core": "^7.0.0-beta.36",
+        "@babel/plugin-proposal-class-properties": "^7.0.0-beta.36",
+        "@babel/plugin-proposal-export-default-from": "^7.0.0-beta.36",
+        "@babel/plugin-proposal-export-namespace-from": "^7.0.0-beta.36",
+        "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.36",
+        "@babel/plugin-syntax-dynamic-import": "^7.0.0-beta.36",
+        "@babel/preset-env": "^7.0.0-beta.36",
+        "@babel/preset-flow": "^7.0.0-beta.36",
+        "@babel/preset-react": "^7.0.0-beta.36",
+        "@std/esm": "^0.18.0",
+        "babel-core": "7.0.0-bridge.0",
+        "babel-jest": "^22.0.4",
+        "babel-loader": "^7.1.2",
+        "babel-plugin-lodash": "^3.3.2",
+        "chalk": "^2.3.0",
+        "jest": "^22.0.4",
+        "lodash": "^4.17.4",
+        "rabbit-umd-extra": "^0.0.3",
+        "rollup": "^0.53.1",
+        "rollup-plugin-babel": "^3.0.3",
+        "rollup-plugin-json": "^2.3.0",
+        "rollup-plugin-uglify": "^2.0.1",
+        "webpack": "^4.0.0-alpha.2",
+        "webpack-cli": "^2.0.2",
+        "webpack-sources": "^1.1.0"
+    }
+}

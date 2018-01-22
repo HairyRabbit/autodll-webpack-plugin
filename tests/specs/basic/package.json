@@ -1,0 +1,11 @@
+{
+    "name": "test",
+    "version": "0.0.0",
+    "devDependencies": {
+        "webpack": "^4.0.0-alpha.2",
+        "webpack-cli": "^2.0.2"
+    },
+    "dependencies": {
+        "react": "^16.2.0"
+    }
+}
