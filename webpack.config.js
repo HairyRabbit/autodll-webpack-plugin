@@ -27,7 +27,7 @@ module.exports =
 //   target: 'node'
 // }]
 {
-  mode: 'development',
+  // mode: 'development',
   entry: path.resolve('lib/index.js'),
   output: {
     path: path.resolve('dist'),
