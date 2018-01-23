@@ -1,6 +1,7 @@
 const AutoDllPlugin = require('../').AutoDllPlugin
 const path = require('path')
 const webpack = require('webpack')
+// const fs = require('memory-fs')
 
 module.exports = {
   entry: path.resolve(__dirname, './a.js'),
@@ -13,5 +14,5 @@ module.exports = {
   // stats: 'detailed',
   plugins: [
     new AutoDllPlugin(),
-  ],
+  ]
 }
