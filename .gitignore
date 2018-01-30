@@ -61,3 +61,6 @@ typings/
 # Projectile
 tmp
 lib
+dist
+.dll
+specs/**/yarn.lock

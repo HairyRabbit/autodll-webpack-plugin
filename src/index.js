@@ -422,6 +422,7 @@ export default class AutoDllPlugin /* extends Tapable */ {
    */
   make() {
     const WriteCachePlugin = this.cache()
+    const rules = this.webpackOptions.module.rules
 
     const options = {
       entry: {
@@ -432,8 +433,11 @@ export default class AutoDllPlugin /* extends Tapable */ {
         filename: '[name].js',
         library: '[name]'
       },
+      module: {
+        rules
+      },
       context: this.context,
-      devtool: 'none',
+      devtool: 'source-map',
       plugins: [
         new webpack.DllPlugin({
           context: this.context,
