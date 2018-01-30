@@ -1,6 +1,6 @@
 {
     "name": "@rabbitcc/autodll-webpack-plugin",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "Make dll first",
     "main": "lib/index.js",
     "scripts": {
@@ -12,7 +12,8 @@
         "checkall": "yarn test && yarn typed",
         "build": "cross-env NODE_ENV=development rollup -c",
         "build:prod": "cross-env NODE_ENV=production rollup -c",
-        "build:type": "flow gen-flow-files src/index.js > lib/index.js.flow"
+        "build:type": "flow gen-flow-files src/index.js > lib/index.js.flow",
+        "prepublish": "yarn build:prod && yarn build:type"
     },
     "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
     "keywords": [],

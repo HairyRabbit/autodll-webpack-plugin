@@ -3,7 +3,6 @@ import resolve from 'rollup-plugin-node-resolve'
 import json from 'rollup-plugin-json'
 import babel from 'rollup-plugin-babel'
 import commonjs from 'rollup-plugin-commonjs'
-import uglify from 'rollup-plugin-uglify-es'
 import pkg from './package.json'
 
 export default {
@@ -19,8 +18,7 @@ export default {
     }),
     babel({ exclude: 'node_modules/**' }),
     json({ exclude: 'node_modules/**' }),
-    commonjs(),
-    'production' === process.env.NODE_ENV ? uglify({}) : []
+    commonjs()
   ),
   external: [].concat(
     'fs',
