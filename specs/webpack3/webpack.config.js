@@ -1,4 +1,4 @@
-const AutoDllPlugin = require('../').AutoDllPlugin
+const AutoDllPlugin = require('../../lib').default
 const path = require('path')
 const webpack = require('webpack')
 
@@ -9,9 +9,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: 'none',
-  // stats: 'detailed',
   plugins: [
-    new AutoDllPlugin(),
-  ],
+    new AutoDllPlugin()
+  ]
 }

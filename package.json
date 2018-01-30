@@ -1,18 +1,18 @@
 {
     "name": "@rabbitcc/autodll-webpack-plugin",
-    "version": "0.0.4",
+    "version": "0.0.7",
     "description": "Make dll first",
-    "main": "dist/index.js",
+    "main": "lib/index.js",
     "scripts": {
         "start": "yarn build && yarn test:spec",
         "test": "jest",
-        "typed": "flow",
+        "test:type": "flow",
+        "pretest:spec": "yarn build",
+        "test:spec": "cross-env DEBUG=true sh specs/test.sh",
         "checkall": "yarn test && yarn typed",
-        "build:umd": "cross-env NODE_ENV=development rollup -c",
-        "build:umd:min": "cross-env NODE_ENV=production rollup -c",
-        "build:libdefs": "flow gen-flow-files lib/index.js > dist/umd-extra.js.flow",
-        "test:spec": "webpack --config=tests/specs/webpack3/webpack.config.js --watch",
-        "build": "webpack"
+        "build": "cross-env NODE_ENV=development rollup -c",
+        "build:prod": "cross-env NODE_ENV=production rollup -c",
+        "build:type": "flow gen-flow-files src/index.js > lib/index.js.flow"
     },
     "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
     "keywords": [],
@@ -32,21 +32,27 @@
         "@babel/preset-env": "^7.0.0-beta.36",
         "@babel/preset-flow": "^7.0.0-beta.36",
         "@babel/preset-react": "^7.0.0-beta.36",
-        "@std/esm": "^0.18.0",
         "babel-core": "7.0.0-bridge.0",
         "babel-jest": "^22.0.4",
         "babel-loader": "^7.1.2",
         "babel-plugin-lodash": "^3.3.2",
-        "chalk": "^2.3.0",
         "jest": "^22.0.4",
-        "lodash": "^4.17.4",
-        "rabbit-umd-extra": "^0.0.3",
         "rollup": "^0.53.1",
-        "rollup-plugin-babel": "^3.0.3",
+        "rollup-plugin-babel": "^4.0.0-beta.1",
+        "rollup-plugin-commonjs": "^8.3.0",
         "rollup-plugin-json": "^2.3.0",
+        "rollup-plugin-node-resolve": "^3.0.2",
         "rollup-plugin-uglify": "^2.0.1",
+        "rollup-plugin-uglify-es": "^0.0.1",
         "webpack": "^3.10.0",
         "webpack-cli": "^2.0.2",
+        "webpack-dev-server": "^2.11.1"
+    },
+    "peerDependencies": {
+        "webpack": "^2 | ^3"
+    },
+    "dependencies": {
+        "chalk": "^2.3.0",
         "webpack-sources": "^1.1.0"
     }
 }
