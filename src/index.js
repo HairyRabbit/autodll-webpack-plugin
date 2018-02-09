@@ -47,6 +47,7 @@ export default class AutoDllPlugin /* extends Tapable */ {
   context: string;
   compiler: Compiler;
   webpackOptions: Object;
+  pkg: Object;
   deps: Array<string>;
   pkgpath: string;
   timestamp: number;
@@ -318,7 +319,12 @@ export default class AutoDllPlugin /* extends Tapable */ {
       } else {
         const htmlPluginHook = 'html-webpack-plugin-before-html-generation'
         compilation.plugin(htmlPluginHook, (data, callback) => {
-          data.assets.js.unshift('/' + fileName)
+          data.assets.chunks = {
+            verdor: {
+              entry: '/' + fileName
+            },
+            ...data.assets.chunks
+          }
           callback(null, data)
         })
       }
@@ -423,10 +429,19 @@ export default class AutoDllPlugin /* extends Tapable */ {
   make() {
     const WriteCachePlugin = this.cache()
     const rules = this.webpackOptions.module.rules
+    const polyfillName = '@babel/polyfill'
+    const isPolyfill = Boolean({
+      ...this.pkg.dependencies,
+      ...this.pkg.devDependencies
+    }[polyfillName])
 
     const options = {
       entry: {
-        [this.name]: this.deps
+        [this.name]: process.env.NODE_ENV === 'production' ?
+          [].concat(
+            isPolyfill ? polyfillName : [],
+            this.deps
+          ) : this.deps
       },
       output: {
         path: path.resolve(this.context, this.output),
@@ -466,6 +481,7 @@ export default class AutoDllPlugin /* extends Tapable */ {
      */
     try {
       const pkgconfig = JSON.parse(fs.readFileSync(this.pkgpath, 'utf-8'))
+      this.pkg = pkgconfig
       return Object.keys(pkgconfig[this.depkey || {}]).filter(this.ignore)
     } catch(error) {
       throw new Error(error)
