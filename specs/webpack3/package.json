@@ -1,13 +1,12 @@
 {
-    "name": "test",
-    "version": "0.0.0",
-    "license": "UNLICENSED",
-    "devDependencies": {
-        "webpack-cli": "^2.0.2",
-        "webpack": "^3.10.0",
-        "webpack-dev-server": "^2.11.1"
-    },
-    "dependencies": {
-        "react": "^16.2.0"
-    }
+  "name": "test",
+  "version": "0.0.0",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.11.1"
+  },
+  "dependencies": {
+    "react": "^16.2.0"
+  }
 }

@@ -8,11 +8,23 @@ cd specs
 # cd ..
 
 # cd webpack3
+# rm -rf .dll
 # yarn
 # yarn webpack-dev-server
 # cd ..
 
-cd css-loader
+cd webpack3
 yarn
-yarn webpack --watch
+yarn webpack-dev-server
 cd ..
+
+# cd css-loader
+# yarn
+# yarn webpack --watch
+# cd ..
+
+# cd inject
+# rm -rf .dll
+# yarn
+# yarn webpack-dev-server
+# cd ..

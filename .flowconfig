@@ -1,8 +1,8 @@
 [ignore]
 .*\.config\.js
-<PROJECT_ROOT>/dist/.*
 <PROJECT_ROOT>/tests/.*
-
+<PROJECT_ROOT>/specs/.*
+<PROJECT_ROOT>/lib/.*
 
 [include]
 
@@ -12,4 +12,3 @@
 
 [options]
 module.ignore_non_literal_requires=true
-

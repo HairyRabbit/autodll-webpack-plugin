@@ -1,59 +1,60 @@
 {
-    "name": "@rabbitcc/autodll-webpack-plugin",
-    "version": "0.0.12",
-    "description": "Make dll first",
-    "main": "lib/index.js",
-    "scripts": {
-        "start": "yarn build && yarn test:spec",
-        "test": "jest",
-        "test:type": "flow",
-        "pretest:spec": "yarn build",
-        "test:spec": "cross-env DEBUG=true sh specs/test.sh",
-        "checkall": "yarn test && yarn typed",
-        "build": "cross-env NODE_ENV=development rollup -c",
-        "build:prod": "cross-env NODE_ENV=production rollup -c",
-        "build:type": "flow gen-flow-files src/index.js > lib/index.js.flow",
-        "prepublish": "yarn build:prod && yarn build:type"
-    },
-    "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
-    "keywords": [],
-    "author": "HairyRabbit <yfhj1990@hotmail.com>",
-    "license": "GPL-3.0",
-    "bugs": {
-        "url": "https://github.com/HairyRabbit/autodll-webpack-plugin/issues"
-    },
-    "homepage": "https://github.com/HairyRabbit/autodll-webpack-plugin#readme",
-    "devDependencies": {
-        "@babel/core": "^7.0.0-beta.36",
-        "@babel/plugin-proposal-class-properties": "^7.0.0-beta.36",
-        "@babel/plugin-proposal-export-default-from": "^7.0.0-beta.36",
-        "@babel/plugin-proposal-export-namespace-from": "^7.0.0-beta.36",
-        "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.36",
-        "@babel/plugin-syntax-dynamic-import": "^7.0.0-beta.36",
-        "@babel/preset-env": "^7.0.0-beta.36",
-        "@babel/preset-flow": "^7.0.0-beta.36",
-        "@babel/preset-react": "^7.0.0-beta.36",
-        "babel-core": "7.0.0-bridge.0",
-        "babel-jest": "^22.0.4",
-        "babel-loader": "^7.1.2",
-        "babel-plugin-lodash": "^3.3.2",
-        "jest": "^22.0.4",
-        "rollup": "^0.53.1",
-        "rollup-plugin-babel": "^4.0.0-beta.1",
-        "rollup-plugin-commonjs": "^8.3.0",
-        "rollup-plugin-json": "^2.3.0",
-        "rollup-plugin-node-resolve": "^3.0.2",
-        "rollup-plugin-uglify": "^2.0.1",
-        "rollup-plugin-uglify-es": "^0.0.1",
-        "webpack": "^3.10.0",
-        "webpack-cli": "^2.0.2",
-        "webpack-dev-server": "^2.11.1"
-    },
-    "peerDependencies": {
-        "webpack": "^2 | ^3"
-    },
-    "dependencies": {
-        "chalk": "^2.3.0",
-        "webpack-sources": "^1.1.0"
-    }
+  "name": "@rabbitcc/autodll-webpack-plugin",
+  "version": "0.0.13",
+  "description": "Make dll first",
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "yarn build && yarn test:spec",
+    "test": "jest",
+    "test:type": "flow check",
+    "test:co": "jest --coverage",
+    "pretest:spec": "yarn build",
+    "test:spec": "cross-env DEBUG=true sh specs/test.sh",
+    "build": "cross-env NODE_ENV=development rollup -c",
+    "build:prod": "cross-env NODE_ENV=production rollup -c",
+    "build:type": "flow gen-flow-files src/index.js > lib/autodll-webpack-plugin.js.flow",
+    "prepublish": "yarn build:prod && yarn build:type"
+  },
+  "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
+  "keywords": [],
+  "author": "HairyRabbit <yfhj1990@hotmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/HairyRabbit/autodll-webpack-plugin/issues"
+  },
+  "files": [
+    "lib"
+  ],
+  "homepage": "https://github.com/HairyRabbit/autodll-webpack-plugin#readme",
+  "devDependencies": {
+    "@babel/core": "^7.0.0-beta.36",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.36",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.36",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0-beta.36",
+    "@babel/preset-env": "^7.0.0-beta.36",
+    "@babel/preset-flow": "^7.0.0-beta.36",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-jest": "^22.0.4",
+    "babel-loader": "^7.1.2",
+    "flow-bin": "^0.65.0",
+    "jest": "^22.0.4",
+    "rollup": "^0.53.1",
+    "rollup-plugin-babel": "^4.0.0-beta.1",
+    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-json": "^2.3.0",
+    "rollup-plugin-node-resolve": "^3.0.2",
+    "rollup-plugin-uglify": "^2.0.1",
+    "rollup-plugin-uglify-es": "^0.0.1",
+    "webpack": "^3.10.0",
+    "webpack-cli": "^2.0.2",
+    "webpack-dev-server": "^2.11.1"
+  },
+  "peerDependencies": {
+    "webpack": "^2 | ^3"
+  },
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "tapable": "^1.0.0-beta.5",
+    "webpack-sources": "^1.1.0"
+  }
 }
