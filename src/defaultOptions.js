@@ -18,6 +18,6 @@ export default {
   exclude: [],
   injectBabelPolyfill: false,
   injectDevClientScript: false,
-  host: '0.0.0.0',
+  host: 'localhost',
   port: '8080'
 }
