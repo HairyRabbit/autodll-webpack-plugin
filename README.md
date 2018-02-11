@@ -1,18 +1,31 @@
 <div alert="center">
-  <img src="https://raw.githubusercontent.com/HairyRabbit/media/master/Rabbit-Simple.svg" alt="Logo" />
+  <img src="https://raw.githubusercontent.com/HairyRabbit/media/master/Rabbit-Simple.svg?sanitize=true" alt="Logo" />
 </div>
 
 # autodll-webpack-plugin
 
 Make dll first
 
-## feature
+## Features
 
 - make dll from dependencies field of 'package.json' before webpack compile
 - auto update when add/remove packages, watch on package.json changed
 - inject dll bundle to html-webpack-plugin assets
 
 ## Usage
+
+```js
+const AutoDllWebpackPlugin = require('@rabbitcc/autodll-webpack-plugin')
+
+module.exports = {
+  // webpack config options...
+  plugins: [
+    new AutoDllwebpackplugin()
+  ]
+}
+```
+
+## Interface
 
 ```js
 type Options = {
