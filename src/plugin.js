@@ -42,11 +42,8 @@ export default class AutoDllPlugin extends Tapable {
         ...options
     }
 
-    this.ignore = options.ignore || (() => true)
-    this.debug = options.debug || process.env.DEBUG || false
     this.description = 'AutoDllPlugin'
     this.flag = '[AutoDLLPlugin]'
-
 
     this.hooks = {
       beforeBuild: new SyncHook(),
@@ -159,7 +156,7 @@ export default class AutoDllPlugin extends Tapable {
           }
 
           this.log('Create DLL successed')
-          if(this.debug) {
+          if(this.options.debug) {
             console.log(this.renderDeps(), '\n')
             // console.log(data.toString())
           }
@@ -211,7 +208,7 @@ export default class AutoDllPlugin extends Tapable {
           }
 
           this.log('Create DLL successed')
-          if(this.debug) {
+          if(this.options.debug) {
             console.log(this.renderDeps(), '\n')
             // console.log(data.toString())
           }
@@ -238,7 +235,7 @@ export default class AutoDllPlugin extends Tapable {
    * log
    */
   _log(method: string, str: string, ...args: Array<string>): void {
-    if(this.debug) {
+    if(this.options.debug) {
       console[method].apply(console, [
         '%s ' + str,
         this.flag,
