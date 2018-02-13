@@ -13,6 +13,7 @@ import DefaultOptions from './defaultOptions'
 import resolvePkg from './pkgConfigResolver'
 import isWebpack4 from './isWebpack4'
 import isInstalled from './isInstalled'
+import isMemoryFS from './isMemoryFS'
 import injectEntry from './entryInjecter'
 import collectVersions from './collectVersions'
 import type { Compiler } from 'webpack/lib/Compiler'
@@ -43,7 +44,6 @@ export default class AutoDllPlugin extends Tapable {
 
     this.ignore = options.ignore || (() => true)
     this.debug = options.debug || process.env.DEBUG || false
-    this.makeOptions = options.makeOptions || (<T>(x: T) => x)
     this.description = 'AutoDllPlugin'
     this.flag = '[AutoDLLPlugin]'
 
@@ -56,7 +56,7 @@ export default class AutoDllPlugin extends Tapable {
   }
 
   apply(compiler: Compiler): void {
-    const { disabled, output, cachename } = this.options
+    const { disabled, output, manifest, cachename } = this.options
     if(disabled) {
       return
     }
@@ -65,6 +65,7 @@ export default class AutoDllPlugin extends Tapable {
     this.context = compiler.context
     this.webpackOptions = compiler.options
     this.pkgPath = path.resolve(this.context, 'package.json')
+    this.manifestPath = path.resolve(this.context, output, manifest)
     this.cachePath = path.resolve(this.context, output, cachename)
     this.pkg = resolvePkg(this.pkgPath)
     this.deps = this.getDeps()
@@ -139,12 +140,21 @@ export default class AutoDllPlugin extends Tapable {
         this.log(
           '%s, generate new DLL',
           null === result
-            ? 'Cache not found'
-            : 'Cache was out of date'
+            ? 'Done, cache file not found'
+            : 'Done, cache file out of date'
         )
         webpack(this.make()).run((err, data) => {
           if(err) {
             callback(err, null)
+            return
+          }
+
+          const json = data.toJson()
+
+          if(data.hasErrors()) {
+            this.log('Create DLL failed')
+            console.error(json.errors)
+            callback(new Error('BuildError: DLL build failed.'))
             return
           }
 
@@ -180,6 +190,7 @@ export default class AutoDllPlugin extends Tapable {
       /**
        * refetch deps
        */
+      this.pkg = resolvePkg(this.pkgPath)
       this.deps = this.getDeps()
 
       /**
@@ -191,7 +202,7 @@ export default class AutoDllPlugin extends Tapable {
         /**
          * should rebuild DLL
          */
-        this.log('Detected deps was update. Rebuild DLL')
+        this.log('Detected dependencies was update. Rebuild DLL')
 
         webpack(this.make()).run((err, data) => {
           if(err) {
@@ -244,21 +255,19 @@ export default class AutoDllPlugin extends Tapable {
    * call webpack.DllReferencePlugin
    */
   applyRefPlugin(compiler: Function) {
-    const { output, manifest } = this.options
     new webpack.DllReferencePlugin({
       context: this.context,
-      manifest: path.resolve(this.context, output, manifest)
+      manifest: this.manifestPath
     }).apply(compiler)
   }
 
   /**
    * push vendor.js to html scripts assets.
    */
-  applyHtmlPlugin(compilation: Compilation) {
+  applyHtmlPlugin(compilation: Compilation): void {
     const { name, output } = this.options
-    const mfs = this.compiler.outputFileSystem
-    const isMemoryFS = Boolean(mfs.data)
-    if(isMemoryFS) {
+    if(isMemoryFS(this.compiler)) {
+      const mfs = this.compiler.outputFileSystem
       const outputPath = this.webpackOptions.output.path
       const fileName = name + '.js'
       const dllFileRelativePath = path.resolve(outputPath, fileName)
@@ -279,20 +288,29 @@ export default class AutoDllPlugin extends Tapable {
         // )
       } else {
         const htmlPluginHook = 'html-webpack-plugin-before-html-generation'
-        compilation.plugin(htmlPluginHook, (data, callback) => {
-          data.assets.chunks = {
-            verdor: {
-              entry: '/' + fileName
-            },
+        compilation.plugin(htmlPluginHook, appendToChunks)
+      }
+
+      function appendToChunks(data: Object, callback: Function): void {
+        if(data.plugin.options.inject) {
+          data.assets.js = [
+            '/' + fileName,
+              ...data.assets.js
+          ]
+        }
+
+        data.assets.chunks = {
+          verdor: {
+            entry: '/' + fileName
+          },
             ...data.assets.chunks
-          }
-          callback(null, data)
-        })
+        }
+        callback(null, data)
       }
     }
   }
 
-  assertWarning(compiler: Compiler, callback: Function) {
+  assertWarning(compiler: Compiler, callback: Function): void {
     this.log('The plugin only works on watch mode, skip generate dll.')
     this.runWithoutWatch = true
     callback(null)
@@ -357,7 +375,7 @@ export default class AutoDllPlugin extends Tapable {
   cache() {
     const { cachename } = this.options
     const bundles = collectVersions(this.deps, this.context)
-    const webpack4 = this.webpack4
+
     return class WriteCachePlugin {
       description: string;
 
@@ -366,7 +384,7 @@ export default class AutoDllPlugin extends Tapable {
       }
 
       apply(compiler: Function) {
-        if(webpack4) {
+        if(this.webpack4) {
           /**
            * register `emit` hook, generate cache file
            */
@@ -379,13 +397,15 @@ export default class AutoDllPlugin extends Tapable {
           //   }
           // )
         } else {
-          compiler.plugin('emit', (compilation, callback) => {
-            compilation.assets[cachename] = new RawSource(
-              JSON.stringify(bundles)
-            )
-            callback(null, null)
-          })
+          compiler.plugin('emit', this.addToAssets.bind(this))
         }
+      }
+
+      addToAssets(compilation: Compilation, callback: Function): void {
+        compilation.assets[cachename] = new RawSource(
+          JSON.stringify(bundles)
+        )
+        callback()
       }
     }
   }
@@ -401,6 +421,7 @@ export default class AutoDllPlugin extends Tapable {
       name,
       output,
       manifest,
+      makeOptions,
       injectBabelPolyfill,
       injectDevClientScript,
       host,
@@ -437,7 +458,7 @@ export default class AutoDllPlugin extends Tapable {
     }
 
     /**
-     * inject @babel/polyfill
+     * inject @babel/polyfill or babel-polyfill
      */
     if(injectBabelPolyfill) {
       const polyfill = ['@babel/polyfill', 'babel-polyfill']
@@ -485,11 +506,12 @@ export default class AutoDllPlugin extends Tapable {
     //   options.mode = 'development'
     // }
 
-    return this.makeOptions(options)
+    makeOptions(options)
+    return options
   }
 
   /**
-   * get deps
+   * get dependencies from 'package.json'
    */
   getDeps(): Array<string> {
     const { include, exclude } = this.options

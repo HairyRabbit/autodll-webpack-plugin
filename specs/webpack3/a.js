@@ -1,3 +1,3 @@
-import * as React from 'react'
-
-console.log(React)
+import 'react'
+import 'jquery'
+import 'react-dom'

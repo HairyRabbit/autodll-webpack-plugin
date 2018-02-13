@@ -13,7 +13,7 @@ export default {
   cachename: 'vendor.cache.json',
   debug: false,
   disabled: false,
-  makeOptions: (<T>(x: T) => x),
+  makeOptions: (x: Object) => void 0,
   include: [],
   exclude: [],
   injectBabelPolyfill: false,

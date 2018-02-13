@@ -13,10 +13,10 @@ cd specs
 # yarn webpack-dev-server
 # cd ..
 
-cd webpack3
-yarn
-yarn webpack-dev-server
-cd ..
+# cd webpack3
+# yarn
+# yarn webpack-dev-server
+# cd ..
 
 # cd css-loader
 # yarn
@@ -28,3 +28,9 @@ cd ..
 # yarn
 # yarn webpack-dev-server
 # cd ..
+
+cd inject-html
+rm -rf .dll
+yarn
+yarn webpack-dev-server
+cd ..

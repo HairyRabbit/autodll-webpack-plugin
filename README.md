@@ -4,13 +4,13 @@
 
 # autodll-webpack-plugin
 
-Make dll first
+Make dll first, let webpack build fast.
 
 ## Features
 
-- make dll from dependencies field of 'package.json' before webpack compile
-- auto update when add/remove packages, watch on package.json changed
-- inject dll bundle to html-webpack-plugin assets
+- make webpack dll bundle from dependencies field of 'package.json', before webpack compile.
+- auto update dll bundle when you add/remove packages to 'dependencies', watch on package.json changed.
+- inject dll bundle to html-webpack-plugin assets.chunks
 
 ## Usage
 
@@ -37,7 +37,7 @@ type Options = {
   output: string = '.dll',
   cachename: string = 'vendor.cache.json',
   /**
-   * debug log.
+   * show the debug logs.
    */
   debug: boolean = false,
   /**
@@ -45,25 +45,26 @@ type Options = {
    */
   disabled: boolean = false,
   /**
-   * modifie the dll option of webpack before make process.
+   * modify the dll option of webpack before make process.
    */
-  makeOptions: webpackOption => webpackOption = x => x,
+  makeOptions: webpackOption => void = webpackOption => {},
   /**
-   * include or exclude other packages.
+   * include or exclude someother packages.
    */
   include: Array<string> = [],
   exclude: Array<string> = [],
   /**
-   * something times development on old browsers, like ie8, set this option to 'ture'
-   * to prepend babel polyfill to dll entry.
+   * something times development on a old browsers, like ie8, need add polyfills to
+   * support es6 features, e.g. 'Object.assign'. set this option to 'ture' to
+   * prepend babel polyfill to dll options.entry.
    *
-   * Note: this feature require `.babelrc` set useBuiltins to 'entry'.
+   * Note: this feature require `.babelrc` set 'preset-env.useBuiltins' to 'entry'.
    */
   injectBabelPolyfill: boolean = false,
   /**
-   * perpend 'webpack-dev-server/client' to entry, if development with a web app, by
-   * default, host and port was inherit from 'devServer' options, if not, will use
-   * 'http://localhost:8080' as the default value.
+   * perpend 'webpack-dev-server/client' to entry, when you development a web app, by
+   * default, the options 'host' and 'port' was inherit from 'devServer' options, if
+   * not found, will use 'http://localhost:8080' as the default value.
    */
   injectDevClientScript: boolean = false,
   host: string = 'localhost',
