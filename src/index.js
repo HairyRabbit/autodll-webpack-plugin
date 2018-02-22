@@ -8,7 +8,6 @@
  * 3. add assets to HtmlWebpackPlugin plugin
  * 4. add package.json to entry, let it watchable
  *
- * @TODO inherit webpack options to generate dll.
  * @TODO webpack4 supports
  *
  * @flow
@@ -27,7 +26,8 @@ export type Options = {
   injectBabelPolyfill: boolean,
   injectDevClientScript: boolean,
   host: string,
-  port: string
+  port: string,
+  watch: boolean
 }
 
 export { default as default } from './plugin'

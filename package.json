@@ -4,7 +4,7 @@
   "description": "Make dll first",
   "main": "lib/index.js",
   "scripts": {
-    "start": "yarn build && yarn test:spec",
+    "start": "yarn build -w",
     "test": "jest",
     "test:type": "flow check",
     "test:co": "jest --coverage",

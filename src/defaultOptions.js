@@ -11,7 +11,7 @@ export default {
   manifest: 'vendor.manifest.json',
   output: '.dll',
   cachename: 'vendor.cache.json',
-  debug: false,
+  debug: process.env.DEBUG || false,
   disabled: false,
   makeOptions: (x: Object) => void 0,
   include: [],
@@ -19,5 +19,6 @@ export default {
   injectBabelPolyfill: false,
   injectDevClientScript: false,
   host: 'localhost',
-  port: '8080'
+  port: '8080',
+  watch: false
 }

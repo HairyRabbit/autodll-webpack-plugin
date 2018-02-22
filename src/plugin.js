@@ -16,14 +16,21 @@ import isInstalled from './isInstalled'
 import isMemoryFS from './isMemoryFS'
 import injectEntry from './entryInjecter'
 import collectVersions from './collectVersions'
+import setupHostPort from './devHostPortSetup'
+import dllBuilder from './builder'
+import makeDllOptions from './optionConstructor'
 import type { Compiler } from 'webpack/lib/Compiler'
 import type { Compilation } from 'webpack/lib/Compilation'
 import type { Options } from './'
 
+const IDENT_DEVCLIENT = 'IDENT_DEVCLIENT'
+const IDENT_POLYFILL = 'IDENT_POLYFILL'
+
 export default class AutoDllPlugin extends Tapable {
   options: Options;
-  description: string;
+  pluginID: string;
   flag: string;
+  description: string;
   context: string;
   compiler: Compiler;
   webpackOptions: Object;
@@ -34,6 +41,9 @@ export default class AutoDllPlugin extends Tapable {
   timestamp: number;
   webpack4: boolean;
   runWithoutWatch: boolean;
+  installDevClientScript: boolean;
+  installBabelPolyfill: boolean;
+  status: Object;
 
   constructor(options: Options) {
     super()
@@ -42,18 +52,28 @@ export default class AutoDllPlugin extends Tapable {
         ...options
     }
 
+    this.pluginID = 'AutoDll'
     this.description = 'AutoDllPlugin'
-    this.flag = '[AutoDLLPlugin]'
+    this.flag = '[AutoDLL]'
 
     this.hooks = {
       beforeBuild: new SyncHook(),
       build: new SyncHook(),
       afterBuild: new SyncHook()
     }
+
+    this.plugin = this.plugin.bind(this)
+    this.applyRefPlugin = this.applyRefPlugin.bind(this)
+    this.applyHtmlPlugin = this.applyHtmlPlugin.bind(this)
+    this.make = this.make.bind(this)
+    this.cache = this.cache.bind(this)
+    this.build = this.build.bind(this)
+    this.log = this.log.bind(this)
+    this.report = this.report.bind(this)
   }
 
   apply(compiler: Compiler): void {
-    const { disabled, output, manifest, cachename } = this.options
+    const { disabled, output, manifest, cachename, watch } = this.options
     if(disabled) {
       return
     }
@@ -75,164 +95,108 @@ export default class AutoDllPlugin extends Tapable {
 
     if(this.webpack4) {
       /**
-       * register webpack `run` hook, assert watch mode
+       * @TODO: webpack4
        */
-      // compiler.hooks.run.tapAsync(
-      //   this.description,
-      //   this.assertWarning.bind(this)
-      // )
-
-      /**
-       * register webpack `watchRun` hook
-       */
-      // compiler.hooks.watchRun.tapAsync(
-      //   this.description,
-      //   this.plugin.bind(this)
-      // )
-
-      /**
-       * register webpack `afterPlugins` hook
-       */
-      // compiler.hooks.afterPlugins.tap(
-      //   this.description,
-      //   this.applyRefPlugin.bind(this)
-      // )
-
-      /**
-       * register webpack `compilation` hook, for html-webpack-plugin
-       */
-      // compiler.hooks.compilation.tap(
-      //   this.description,
-      //   this.applyRefPlugin.bind(this)
-      // )
     } else {
-      compiler.plugin('run', this.assertWarning.bind(this))
-      if(!this.runWithoutWatch) {
-        compiler.plugin('watch-run', this.plugin.bind(this))
-        compiler.plugin('after-plugins', this.applyRefPlugin.bind(this))
-        compiler.plugin('compilation', this.applyHtmlPlugin.bind(this))
-      }
+      compiler.plugin('run', this.plugin(false))
+      compiler.plugin('watch-run', this.plugin(true))
+      compiler.plugin('after-plugins', this.applyRefPlugin)
+      compiler.plugin('compilation', this.applyHtmlPlugin)
     }
   }
 
   /**
    * main process
    */
-  plugin(watcher: Object, callback: Function) {
-    /**
-     * check cache before make dll.
-     */
-    const compiler = watcher.compiler
-    const timestamp = compiler.contextTimestamps
-          && compiler.contextTimestamps[this.pkgPath]
-    const { output, manifest } = this.options
-
-    if(!timestamp) {
+  plugin(isWatchMode: boolean) {
+    if(!isWatchMode || 'production' === process.env.NODE_ENV) {
+      this._log('warn', `Warning: AutoDll plugin not run with webpack watch mode or the env was 'production'`)
+    }
+    return (watcherOrCompiler: Object, callback: Function) => {
       /**
-       * first run, check the cache was exists
+       * check cache before make dll.
        */
-      const pkgMTime = new Date(fs.statSync(this.pkgPath).mtime).getTime()
-      const result = this.check()
-      if(!result) {
-        this.log(
-          '%s, generate new DLL',
-          null === result
-            ? 'Done, cache file not found'
-            : 'Done, cache file out of date'
-        )
-        webpack(this.make()).run((err, data) => {
-          if(err) {
-            callback(err, null)
-            return
-          }
+      const compiler = watcherOrCompiler.compiler || watcherOrCompiler
+      const timestamp = compiler.contextTimestamps
+            && compiler.contextTimestamps[this.pkgPath]
+      const { output, manifest, watch } = this.options
 
-          const json = data.toJson()
-
-          if(data.hasErrors()) {
-            this.log('Create DLL failed')
-            console.error(json.errors)
-            callback(new Error('BuildError: DLL build failed.'))
-            return
-          }
-
-          this.log('Create DLL successed')
-          if(this.options.debug) {
-            console.log(this.renderDeps(), '\n')
-            // console.log(data.toString())
-          }
-
-          /**
-           * update manifest file mtimes
-           *
-           * @link webpack/watchpack#25
-           */
-          const manifestFile = path.resolve(this.context, output, manifest)
-          const now = Date.now() / 1000 - 10
-          fs.utimesSync(manifestFile, now, now)
-          this.timestamp = pkgMTime
-          callback(null, null)
-        })
-      } else {
-        this.timestamp = pkgMTime
-        this.log('Cache was found')
-        callback(null, null)
-      }
-    } else if(timestamp && !this.timestamp) {
-      /**
-       * this case used for save timestamp, just hack
-       */
-      this.timestamp = timestamp
-      callback(null, null)
-    } else if(this.timestamp !== timestamp) {
-      /**
-       * refetch deps
-       */
-      this.pkg = resolvePkg(this.pkgPath)
-      this.deps = this.getDeps()
-
-      /**
-       * recheck
-       */
-      const result = this.check()
-
-      if(!result) {
+      if(!timestamp) {
         /**
-         * should rebuild DLL
+         * first run, check the cache was exists
          */
-        this.log('Detected dependencies was update. Rebuild DLL')
+        const pkgMTime = new Date(fs.statSync(this.pkgPath).mtime).getTime()
+        const result = this.check()
+        if(!result) {
+          this.log(
+            '%s, generate new DLL',
+            null === result
+              ? 'Done, cache file not found'
+              : 'Done, cache file out of date'
+          )
 
-        webpack(this.make()).run((err, data) => {
-          if(err) {
-            callback(err, null)
-            return
-          }
-
-          this.log('Create DLL successed')
-          if(this.options.debug) {
-            console.log(this.renderDeps(), '\n')
-            // console.log(data.toString())
-          }
-          this.timestamp = timestamp
+          this.build(callback, () => {
+            /**
+             * update manifest file mtimes
+             *
+             * @link webpack/watchpack#25
+             */
+            const manifestFile = path.resolve(this.context, output, manifest)
+            const now = Date.now() / 1000 - 10
+            fs.utimesSync(manifestFile, now, now)
+            this.timestamp = pkgMTime
+          })
+        } else {
+          this.timestamp = pkgMTime
+          this.log('Cache was found')
           callback(null, null)
-        })
-      } else {
+        }
+      } else if(timestamp && !this.timestamp) {
         /**
-         * the deps not changed, no need to rebuild
+         * this case used for save timestamp, just hack
          */
         this.timestamp = timestamp
         callback(null, null)
+      } else if(this.timestamp !== timestamp) {
+        /**
+         * refetch deps
+         */
+        this.pkg = resolvePkg(this.pkgPath)
+        this.deps = this.getDeps()
+
+        /**
+         * recheck
+         */
+        const result = this.check()
+
+        if(!result) {
+          /**
+           * should rebuild DLL
+           */
+          this.log('Detected dependencies was update. Rebuild DLL')
+
+          this.build(callback, () => {
+            this.timestamp = timestamp
+          })
+        } else {
+          /**
+           * the deps not changed, no need to rebuild
+           */
+          this.timestamp = timestamp
+          callback(null, null)
+        }
+      } else {
+        /**
+         * no update
+         */
+        this.log('No update')
+        callback(null, null)
       }
-    } else {
-      /**
-       * no update
-       */
-      this.log('No update')
-      callback(null, null)
     }
   }
 
   /**
-   * log
+   * low level log
    */
   _log(method: string, str: string, ...args: Array<string>): void {
     if(this.options.debug) {
@@ -244,6 +208,9 @@ export default class AutoDllPlugin extends Tapable {
     }
   }
 
+  /**
+   * logger
+   */
   log(...args: Array<string>): void {
     this._log.apply(this, ['log'].concat(args))
   }
@@ -276,13 +243,9 @@ export default class AutoDllPlugin extends Tapable {
        * apply to HtmlWebpackPlugin
        */
       if(this.webpack4 && compilation.hooks.htmlWebpackPluginBeforeHtmlGeneration) {
-        // compilation.hooks.htmlWebpackPluginBeforeHtmlGeneration.tapAsync(
-        //   this.description,
-        //   (data, callback) => {
-        //     data.assets.js.unshift(fileName)
-        //     callback(null, data)
-        //   }
-        // )
+        /**
+         * @TODO: webpack4 supports
+         */
       } else {
         const htmlPluginHook = 'html-webpack-plugin-before-html-generation'
         compilation.plugin(htmlPluginHook, appendToChunks)
@@ -307,18 +270,6 @@ export default class AutoDllPlugin extends Tapable {
     }
   }
 
-  assertWarning(compiler: Compiler, callback: Function): void {
-    this.log('The plugin only works on watch mode, skip generate dll.')
-    this.runWithoutWatch = true
-    callback(null)
-  }
-
-  /**
-   * render packaged deps.
-   */
-  renderDeps(): string {
-    return this.deps.map(dep => '  - ' + dep).join('\n')
-  }
 
   /**
    * check for dependencies was updated.
@@ -339,7 +290,18 @@ export default class AutoDllPlugin extends Tapable {
        * compare cache and dependencies
        */
       const deps = collectVersions(this.deps, this.context)
-      const depslen = this.deps.length
+
+      /**
+       * include clientScript or polyfills also
+       */
+      if(injectDevClientScript) {
+        deps[IDENT_DEVCLIENT] = 0
+      }
+      if(injectBabelPolyfill) {
+        deps[IDENT_POLYFILL] = 0
+      }
+
+      const depslen = Object.keys(deps).length
 
       /**
        * @TODO if depslen less than cachelen, maybe also not rebuild at watching
@@ -351,14 +313,19 @@ export default class AutoDllPlugin extends Tapable {
       /**
        * compare each key/value.
        */
-      for(let key in cache) {
-        if(cache[key] !== deps[key]) {
+      const [a1, a2] = cachelen > depslen ? [cache, deps] : [deps, cache]
+      for(let key in a1) {
+        if(a1[key] !== a2[key]) {
           return false
         }
       }
 
       return true
-    } catch(erro) {
+    } catch(err) {
+      if(!err.message.match(/no such file or directory/)) {
+        throw err
+      }
+
       /**
        * can't find cache, should create a new one.
        */
@@ -373,6 +340,16 @@ export default class AutoDllPlugin extends Tapable {
     const { cachename } = this.options
     const bundles = collectVersions(this.deps, this.context)
 
+    /**
+     * include clientScript or polyfills also
+     */
+    if(this.installDevClientScript) {
+      bundles[IDENT_DEVCLIENT] = 0
+    }
+    if(this.installBabelPolyfill) {
+      bundles[IDENT_POLYFILL] = 0
+    }
+
     return class WriteCachePlugin {
       description: string;
 
@@ -384,15 +361,8 @@ export default class AutoDllPlugin extends Tapable {
         if(this.webpack4) {
           /**
            * register `emit` hook, generate cache file
+           * @TODO: webpack4 supports
            */
-          // compiler.hooks.emit.tap(
-          //   this.description,
-          //   compilation => {
-          //     compilation.assets[cachename] = new RawSource(
-          //       JSON.stringify(bundles)
-          //     )
-          //   }
-          // )
         } else {
           compiler.plugin('emit', this.addToAssets.bind(this))
         }
@@ -411,7 +381,6 @@ export default class AutoDllPlugin extends Tapable {
    * make dll use webpack
    */
   make() {
-    const WriteCachePlugin = this.cache()
     const rules = this.webpackOptions.module.rules
 
     const {
@@ -427,30 +396,24 @@ export default class AutoDllPlugin extends Tapable {
 
     let deps = [...this.deps]
 
+    this.installDevClientScript = false
+    this.installBabelPolyfill = false
+
     /**
      * inject webpack-dev-serser/client
+     * test webpack-dev-server was installed first
      */
     if(injectDevClientScript) {
-      if(isInstalled('webpack-dev-server')) {
-        let _host, _port
-        if(!host || !port) {
-          const devServerOption = this.webpackOptions.devServer
-          if(!devServerOption.host || !devServerOption.port) {
-            this._log('warn', `Can't provide host or port, use default value: 'http://localhost:8080'`)
-            _host = 'localhost'
-            _port = '8080'
-          } else {
-            _host = devServerOption.host
-            _port = devServerOption.port
-          }
-        } else {
-          _host = host
-          _port = port
-        }
-
-        deps.unshift(`webpack-dev-server/client?http://${host}:${port}`)
+      if(!isInstalled('webpack-dev-server')) {
+        this._log('warn', `Can't find module 'webpack-dev-server'`)
       } else {
-        this._log('warn', `Can't find webpack-dev-server, try to install`)
+        const suffix = setupHostPort(
+          host,
+          port,
+          this.webpackOptions.devServer
+        ).join(':')
+        deps.unshift(`webpack-dev-server/client?http://${suffix}`)
+        this.installDevClientScript = true
       }
     }
 
@@ -459,52 +422,71 @@ export default class AutoDllPlugin extends Tapable {
      */
     if(injectBabelPolyfill) {
       const polyfill = ['@babel/polyfill', 'babel-polyfill']
+      /**
+       * test deps was already includes polyfill librarys
+       */
       if(deps.includes(polyfill)) {
         this.log('warn', 'You already bundle babel polyfill, so skip...')
       } else {
+        /**
+         * match babel polyfill version v6 or v7, and use v7 first
+         */
         const polyfillInstalled = polyfill.find(
           str => path.resolve(this.context, 'node_modules', str)
         )
 
-        if(polyfillInstalled) {
-          deps.unshift(polyfillInstalled)
-        } else {
+        if(!polyfillInstalled) {
           this.log('warn', `Can't find @babel/polyfill or babel-polyfill, try to install`)
+        } else {
+          deps.unshift(polyfillInstalled)
+          this.installBabelPolyfill = true
         }
       }
     }
 
-    const options = {
-      entry: {
-        [name]: deps
-      },
-      output: {
-        path: path.resolve(this.context, output),
-        filename: '[name].js',
-        library: '[name]'
-      },
-      module: {
-        rules
-      },
-      context: this.context,
-      devtool: 'source-map',
-      plugins: [
-        new webpack.DllPlugin({
-          context: this.context,
-          path: path.resolve(this.context, output, manifest),
-          name: '[name]'
-        }),
+    /**
+     * make options
+     */
+    const WriteCachePlugin = this.cache()
+    const options = makeDllOptions(
+      name,
+      output,
+      this.context,
+      manifest,
+      deps,
+      rules,
+      new WriteCachePlugin()
+    )
 
-        new WriteCachePlugin()
-      ]
-    }
-
-    // if(this.webpack4) {
-    //   options.mode = 'development'
-    // }
-
+    /**
+     * expose options
+     */
     makeOptions(options)
     return options
+  }
+
+  /**
+   * render packaged deps.
+   */
+  renderDeps(): string {
+    return this.deps.map(dep => '  - ' + dep).join('\n')
+  }
+
+  /**
+   * report build result
+   */
+  report() {
+    if(this.options.debug) {
+      console.log(this.renderDeps(), '\n')
+    }
+  }
+
+  /**
+   * build dll bundles
+   */
+  build(done: Function, callback: Function): void {
+    const options = this.make()
+    dllBuilder(options, this.log, this.report, done, callback)
   }
 
   /**

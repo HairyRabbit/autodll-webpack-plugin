@@ -3,8 +3,9 @@
 cd specs
 
 # cd basic
+# rm -rf .dll
 # yarn
-# yarn webpack --watch
+# yarn webpack
 # cd ..
 
 # cd webpack3
@@ -23,14 +24,14 @@ cd specs
 # yarn webpack --watch
 # cd ..
 
-# cd inject
+cd inject
+# rm -rf .dll
+yarn
+yarn webpack-dev-server
+cd ..
+
+# cd inject-html
 # rm -rf .dll
 # yarn
 # yarn webpack-dev-server
 # cd ..
-
-cd inject-html
-rm -rf .dll
-yarn
-yarn webpack-dev-server
-cd ..
