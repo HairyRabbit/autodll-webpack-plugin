@@ -1,6 +1,6 @@
 {
   "name": "@rabbitcc/autodll-webpack-plugin",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Make dll first",
   "main": "lib/index.js",
   "scripts": {
@@ -25,8 +25,7 @@
     "url": "https://github.com/HairyRabbit/autodll-webpack-plugin/issues"
   },
   "files": [
-    "lib",
-    "flow-typed"
+    "lib"
   ],
   "homepage": "https://github.com/HairyRabbit/autodll-webpack-plugin#readme",
   "devDependencies": {
