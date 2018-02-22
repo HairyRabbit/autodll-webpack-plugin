@@ -39,17 +39,24 @@ export default class AutoDllPlugin extends Tapable {
   pkg: Object;
   deps: Array<string>;
   pkgPath: string;
+  manifestPath: string;
   cachePath: string;
   timestamp: number;
   webpack4: boolean;
-  runWithoutWatch: boolean;
   installDevClientScript: boolean;
   installBabelPolyfill: boolean;
   status: Object;
+  initBuild: boolean;
+
+  plugin: Function;
+  applyRefPlugin: Function;
+  applyHtmlPlugin: Function;
+  log: Function;
+  report: Function;
 
   constructor(options: Options) {
     super()
-    this.options = options = {
+    this.options = {
         ...DefaultOptions,
         ...options
     }
@@ -67,9 +74,6 @@ export default class AutoDllPlugin extends Tapable {
     this.plugin = this.plugin.bind(this)
     this.applyRefPlugin = this.applyRefPlugin.bind(this)
     this.applyHtmlPlugin = this.applyHtmlPlugin.bind(this)
-    this.make = this.make.bind(this)
-    this.cache = this.cache.bind(this)
-    this.build = this.build.bind(this)
     this.log = this.log.bind(this)
     this.report = this.report.bind(this)
   }
@@ -120,9 +124,8 @@ export default class AutoDllPlugin extends Tapable {
   /**
    * build at first compile time
    */
-  init(callback: Function, mtime?: number): void {
+  init(callback: Function, mtime: ?number): void {
     const result = this.check()
-    console.log(result)
     if(!result) {
       this.log(
         '%s, generate new DLL',
@@ -133,14 +136,14 @@ export default class AutoDllPlugin extends Tapable {
       this.build(callback, data => {
         backMTime(this.manifestPath)
         this.status = data
-        if(this.options.watch) {
+        if(mtime) {
           this.timestamp = mtime
         }
         this.initBuild = true
       })
     } else {
       this.log('Cache file was found')
-      if(this.options.watch) {
+      if(mtime) {
         this.timestamp = mtime
       }
       this.initBuild = true
@@ -159,7 +162,7 @@ export default class AutoDllPlugin extends Tapable {
     const { output, manifest, watch } = this.options
 
     if(!this.initBuild) {
-      this.init(callback, watch && getMTime(this.pkgPath))
+      this.init(callback, watch ? getMTime(this.pkgPath) : null)
       return
     }
 
@@ -310,10 +313,10 @@ export default class AutoDllPlugin extends Tapable {
        * include clientScript or polyfills also
        */
       if(injectDevClientScript) {
-        deps[IDENT_DEVCLIENT] = 0
+        deps[IDENT_DEVCLIENT] = IDENT_DEVCLIENT
       }
       if(injectBabelPolyfill) {
-        deps[IDENT_POLYFILL] = 0
+        deps[IDENT_POLYFILL] = IDENT_POLYFILL
       }
 
       const depslen = Object.keys(deps).length
@@ -359,10 +362,10 @@ export default class AutoDllPlugin extends Tapable {
      * include clientScript or polyfills also
      */
     if(this.installDevClientScript) {
-      bundles[IDENT_DEVCLIENT] = 0
+      bundles[IDENT_DEVCLIENT] = IDENT_DEVCLIENT
     }
     if(this.installBabelPolyfill) {
-      bundles[IDENT_POLYFILL] = 0
+      bundles[IDENT_POLYFILL] = IDENT_POLYFILL
     }
 
     return class WriteCachePlugin {

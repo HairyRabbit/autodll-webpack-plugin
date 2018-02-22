@@ -1,6 +1,6 @@
 {
   "name": "@rabbitcc/autodll-webpack-plugin",
-  "version": "0.0.15",
+  "version": "0.0.17",
   "description": "Make dll first",
   "main": "lib/index.js",
   "scripts": {
@@ -10,10 +10,12 @@
     "test:co": "jest --coverage",
     "pretest:spec": "yarn build",
     "test:spec": "cross-env DEBUG=true sh specs/test.sh",
+    "clean": "rm lib -rf",
+    "clean:type": "rm flow-typed -rf",
     "build": "cross-env NODE_ENV=development rollup -c",
-    "build:prod": "cross-env NODE_ENV=production rollup -c",
-    "build:type": "flow gen-flow-files src/index.js > lib/autodll-webpack-plugin.js.flow",
-    "prepublish": "yarn build:prod && yarn build:type"
+    "build:prod": "yarn clean && cross-env NODE_ENV=production rollup -c",
+    "build:type": "yarn clean:type && mkdir flow-typed && flow gen-flow-files src/index.js > flow-typed/modules.js",
+    "prepublish": "yarn test:co && yarn test:type && yarn build:prod"
   },
   "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
   "keywords": [],
@@ -23,7 +25,8 @@
     "url": "https://github.com/HairyRabbit/autodll-webpack-plugin/issues"
   },
   "files": [
-    "lib"
+    "lib",
+    "flow-typed"
   ],
   "homepage": "https://github.com/HairyRabbit/autodll-webpack-plugin#readme",
   "devDependencies": {

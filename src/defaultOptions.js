@@ -11,7 +11,7 @@ export default {
   manifest: 'vendor.manifest.json',
   output: '.dll',
   cachename: 'vendor.cache.json',
-  debug: process.env.DEBUG || false,
+  debug: Boolean(process.env.DEBUG) || false,
   disabled: false,
   makeOptions: (x: Object) => void 0,
   include: [],

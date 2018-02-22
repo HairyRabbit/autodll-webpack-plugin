@@ -57,6 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+# FLow typed
+flow-typed
 
 # Projectile
 tmp

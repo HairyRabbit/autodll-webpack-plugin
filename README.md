@@ -6,12 +6,6 @@
 
 Make dll first, let webpack build fast.
 
-## Features
-
-- make webpack dll bundle from dependencies field of 'package.json', before webpack compile.
-- auto update dll bundle when you add/remove packages to 'dependencies', watch on package.json changed.
-- inject dll bundle to html-webpack-plugin assets.chunks
-
 ## Usage
 
 ```js
@@ -44,6 +38,10 @@ type Options = {
    * disabled do everything, just return.
    */
   disabled: boolean = false,
+  /**
+   * watch package.json change to rebuild dll
+   */
+  watch: boolean = false
   /**
    * modify the dll option of webpack before make process.
    */
