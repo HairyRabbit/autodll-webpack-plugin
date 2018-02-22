@@ -10,6 +10,8 @@ module.exports = {
     filename: '[name].js'
   },
   plugins: [
-    new AutoDllPlugin()
+    new AutoDllPlugin({
+      watch: true
+    })
   ]
 }

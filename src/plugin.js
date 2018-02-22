@@ -19,6 +19,8 @@ import collectVersions from './collectVersions'
 import setupHostPort from './devHostPortSetup'
 import dllBuilder from './builder'
 import makeDllOptions from './optionConstructor'
+import backMTime from './mtimeBack'
+import getMTime from './fileMTimeResolver'
 import type { Compiler } from 'webpack/lib/Compiler'
 import type { Compilation } from 'webpack/lib/Compilation'
 import type { Options } from './'
@@ -74,8 +76,16 @@ export default class AutoDllPlugin extends Tapable {
 
   apply(compiler: Compiler): void {
     const { disabled, output, manifest, cachename, watch } = this.options
+
     if(disabled) {
       return
+    }
+
+    /**
+     * warning when run on production
+     */
+    if('production' === process.env.NODE_ENV) {
+      this._log('warn', `Warning: AutoDll plugin build on production mode`)
     }
 
     this.compiler = compiler
@@ -88,75 +98,81 @@ export default class AutoDllPlugin extends Tapable {
     this.deps = this.getDeps()
     this.webpack4 = isWebpack4(compiler)
 
-    /**
-     * inject pkg to entry, let webpack watch package.json change
-     */
-    injectEntry(compiler.options, this.pkgPath)
+    if(watch) {
+      /**
+       * inject pkg to entry, let webpack watch package.json change
+       */
+      injectEntry(compiler.options, this.pkgPath)
+    }
 
     if(this.webpack4) {
       /**
        * @TODO: webpack4
        */
     } else {
-      compiler.plugin('run', this.plugin(false))
-      compiler.plugin('watch-run', this.plugin(true))
+      compiler.plugin('run', this.plugin)
+      compiler.plugin('watch-run', this.plugin)
       compiler.plugin('after-plugins', this.applyRefPlugin)
       compiler.plugin('compilation', this.applyHtmlPlugin)
     }
   }
 
   /**
+   * build at first compile time
+   */
+  init(callback: Function, mtime?: number): void {
+    const result = this.check()
+    console.log(result)
+    if(!result) {
+      this.log(
+        '%s, generate new DLL',
+        null === result
+          ? 'Cache file not found'
+          : 'Cache file out of date'
+      )
+      this.build(callback, data => {
+        backMTime(this.manifestPath)
+        this.status = data
+        if(this.options.watch) {
+          this.timestamp = mtime
+        }
+        this.initBuild = true
+      })
+    } else {
+      this.log('Cache file was found')
+      if(this.options.watch) {
+        this.timestamp = mtime
+      }
+      this.initBuild = true
+      callback()
+    }
+  }
+
+  /**
    * main process
    */
-  plugin(isWatchMode: boolean) {
-    if(!isWatchMode || 'production' === process.env.NODE_ENV) {
-      this._log('warn', `Warning: AutoDll plugin not run with webpack watch mode or the env was 'production'`)
+  plugin(watcherOrCompiler: Object, callback: Function) {
+    /**
+     * check cache before make dll.
+     */
+    const compiler = watcherOrCompiler.compiler || watcherOrCompiler
+    const { output, manifest, watch } = this.options
+
+    if(!this.initBuild) {
+      this.init(callback, watch && getMTime(this.pkgPath))
+      return
     }
-    return (watcherOrCompiler: Object, callback: Function) => {
-      /**
-       * check cache before make dll.
-       */
-      const compiler = watcherOrCompiler.compiler || watcherOrCompiler
+
+    if(watch) {
       const timestamp = compiler.contextTimestamps
             && compiler.contextTimestamps[this.pkgPath]
-      const { output, manifest, watch } = this.options
 
-      if(!timestamp) {
-        /**
-         * first run, check the cache was exists
-         */
-        const pkgMTime = new Date(fs.statSync(this.pkgPath).mtime).getTime()
-        const result = this.check()
-        if(!result) {
-          this.log(
-            '%s, generate new DLL',
-            null === result
-              ? 'Done, cache file not found'
-              : 'Done, cache file out of date'
-          )
-
-          this.build(callback, () => {
-            /**
-             * update manifest file mtimes
-             *
-             * @link webpack/watchpack#25
-             */
-            const manifestFile = path.resolve(this.context, output, manifest)
-            const now = Date.now() / 1000 - 10
-            fs.utimesSync(manifestFile, now, now)
-            this.timestamp = pkgMTime
-          })
-        } else {
-          this.timestamp = pkgMTime
-          this.log('Cache was found')
-          callback(null, null)
-        }
-      } else if(timestamp && !this.timestamp) {
+      if(timestamp && !this.timestamp) {
         /**
          * this case used for save timestamp, just hack
          */
         this.timestamp = timestamp
-        callback(null, null)
+        callback()
       } else if(this.timestamp !== timestamp) {
         /**
          * refetch deps
@@ -167,30 +183,29 @@ export default class AutoDllPlugin extends Tapable {
         /**
          * recheck
          */
-        const result = this.check()
-
-        if(!result) {
+        if(!this.check()) {
           /**
-           * should rebuild DLL
+           * check failed, should rebuild DLL
            */
           this.log('Detected dependencies was update. Rebuild DLL')
 
-          this.build(callback, () => {
+          this.build(callback, data => {
             this.timestamp = timestamp
+            this.status = data
           })
         } else {
           /**
            * the deps not changed, no need to rebuild
            */
           this.timestamp = timestamp
-          callback(null, null)
+          callback()
         }
       } else {
         /**
          * no update
          */
-        this.log('No update')
-        callback(null, null)
+        this.log('No need to update')
+        callback()
       }
     }
   }
@@ -230,14 +245,14 @@ export default class AutoDllPlugin extends Tapable {
    */
   applyHtmlPlugin(compilation: Compilation): void {
     const { name, output } = this.options
-    if(isMemoryFS(this.compiler)) {
-      const mfs = this.compiler.outputFileSystem
+    const ofs = this.compiler.outputFileSystem
+    if(isMemoryFS(ofs)) {
       const outputPath = this.webpackOptions.output.path
       const fileName = name + '.js'
       const dllFileRelativePath = path.resolve(outputPath, fileName)
       const dllFilePath = path.resolve(this.context, output, fileName)
-      mfs.mkdirpSync(outputPath)
-      mfs.writeFileSync(dllFileRelativePath, fs.readFileSync(dllFilePath, 'utf-8'))
+      ofs.mkdirpSync(outputPath)
+      ofs.writeFileSync(dllFileRelativePath, fs.readFileSync(dllFilePath, 'utf-8'))
 
       /**
        * apply to HtmlWebpackPlugin

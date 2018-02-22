@@ -6,6 +6,6 @@
 
 import type { Compiler } from 'webpack/lib/Compiler'
 
-export default function isMemoryFS(compiler: Compiler): boolean %checks {
-  return 'MemoryFileSystem' === compiler.outputFileSystem.constructor.name
+export default function isMemoryFS(fs: *): boolean %checks {
+  return 'MemoryFileSystem' === fs.constructor.name
 }

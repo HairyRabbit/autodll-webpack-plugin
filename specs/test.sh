@@ -8,11 +8,11 @@ cd specs
 # yarn webpack
 # cd ..
 
-# cd webpack3
-# rm -rf .dll
-# yarn
-# yarn webpack-dev-server
-# cd ..
+cd webpack3
+rm -rf .dll
+yarn
+yarn webpack-dev-server
+cd ..
 
 # cd webpack3
 # yarn
@@ -24,11 +24,11 @@ cd specs
 # yarn webpack --watch
 # cd ..
 
-cd inject
+# cd inject
 # rm -rf .dll
-yarn
-yarn webpack-dev-server
-cd ..
+# yarn
+# yarn webpack-dev-server
+# cd ..
 
 # cd inject-html
 # rm -rf .dll
