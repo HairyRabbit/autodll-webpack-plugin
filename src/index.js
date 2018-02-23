@@ -30,4 +30,8 @@ export type Options = {
   watch: boolean
 }
 
-export { default as default } from './plugin'
+export {
+  default as default,
+  IDENT_DEVCLIENT as flagDevClient,
+  IDENT_POLYFILL as flagPolyfill
+} from './plugin'

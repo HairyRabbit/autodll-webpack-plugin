@@ -25,8 +25,8 @@ import type { Compiler } from 'webpack/lib/Compiler'
 import type { Compilation } from 'webpack/lib/Compilation'
 import type { Options } from './'
 
-const IDENT_DEVCLIENT = 'IDENT_DEVCLIENT'
-const IDENT_POLYFILL = 'IDENT_POLYFILL'
+export const IDENT_DEVCLIENT = 'IDENT_DEVCLIENT'
+export const IDENT_POLYFILL = 'IDENT_POLYFILL'
 
 export default class AutoDllPlugin extends Tapable {
   options: Options;
@@ -45,7 +45,6 @@ export default class AutoDllPlugin extends Tapable {
   webpack4: boolean;
   installDevClientScript: boolean;
   installBabelPolyfill: boolean;
-  status: Object;
   initBuild: boolean;
 
   plugin: Function;
@@ -135,7 +134,6 @@ export default class AutoDllPlugin extends Tapable {
       )
       this.build(callback, data => {
         backMTime(this.manifestPath)
-        this.status = data
         if(mtime) {
           this.timestamp = mtime
         }
@@ -194,7 +192,6 @@ export default class AutoDllPlugin extends Tapable {
 
           this.build(callback, data => {
             this.timestamp = timestamp
-            this.status = data
           })
         } else {
           /**
