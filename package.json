@@ -1,6 +1,6 @@
 {
   "name": "@rabbitcc/autodll-webpack-plugin",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "Make dll first",
   "main": "lib/index.js",
   "scripts": {
@@ -52,7 +52,7 @@
     "webpack-dev-server": "^2.11.1"
   },
   "peerDependencies": {
-    "webpack": "^2 | ^3"
+    "webpack": "^2 || ^3"
   },
   "dependencies": {
     "tapable": "^1.0.0-beta.5",
