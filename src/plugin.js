@@ -164,7 +164,9 @@ export default class AutoDllPlugin extends Tapable {
       return
     }
 
-    if(watch) {
+    if(!watch) {
+      callback()
+    } else {
       const timestamp = compiler.contextTimestamps
             && compiler.contextTimestamps[this.pkgPath]
 
