@@ -11,12 +11,10 @@ import { Tapable, SyncHook } from 'tapable'
 import { RawSource } from 'webpack-sources'
 import DefaultOptions from './defaultOptions'
 import resolvePkg from './pkgConfigResolver'
-import isWebpack4 from './isWebpack4'
 import isInstalled from './isInstalled'
 import isMemoryFS from './isMemoryFS'
 import injectEntry from './entryInjecter'
 import collectVersions from './collectVersions'
-import setupHostPort from './devHostPortSetup'
 import dllBuilder from './builder'
 import makeDllOptions from './optionConstructor'
 import backMTime from './mtimeBack'
@@ -32,7 +30,6 @@ export default class AutoDllPlugin extends Tapable {
   options: Options;
   pluginID: string;
   flag: string;
-  description: string;
   context: string;
   compiler: Compiler;
   webpackOptions: Object;
@@ -42,8 +39,6 @@ export default class AutoDllPlugin extends Tapable {
   manifestPath: string;
   cachePath: string;
   timestamp: number;
-  webpack4: boolean;
-  installDevClientScript: boolean;
   installBabelPolyfill: boolean;
   initBuild: boolean;
 
@@ -56,12 +51,11 @@ export default class AutoDllPlugin extends Tapable {
   constructor(options: Options) {
     super()
     this.options = {
-        ...DefaultOptions,
-        ...options
+      ...DefaultOptions,
+      ...options
     }
 
     this.pluginID = 'AutoDll'
-    this.description = 'AutoDllPlugin'
     this.flag = '[AutoDLL]'
 
     this.hooks = {
@@ -99,7 +93,6 @@ export default class AutoDllPlugin extends Tapable {
     this.cachePath = path.resolve(this.context, output, cachename)
     this.pkg = resolvePkg(this.pkgPath)
     this.deps = this.getDeps()
-    this.webpack4 = isWebpack4(compiler)
 
     if(watch) {
       /**
@@ -108,16 +101,10 @@ export default class AutoDllPlugin extends Tapable {
       injectEntry(compiler.options, this.pkgPath)
     }
 
-    if(this.webpack4) {
-      /**
-       * @TODO: webpack4
-       */
-    } else {
-      compiler.plugin('run', this.plugin)
-      compiler.plugin('watch-run', this.plugin)
-      compiler.plugin('after-plugins', this.applyRefPlugin)
-      compiler.plugin('compilation', this.applyHtmlPlugin)
-    }
+    compiler.hooks.run.tapAsync('AutoDllRun', this.plugin)
+    compiler.hooks.watchRun.tapAsync('AutoDllRunWatch', this.plugin)
+    compiler.hooks.afterPlugins.tap('AutoDllApplyPlugins', this.applyRefPlugin)
+    compiler.hooks.compilation.tap('AutoDllPrependAssert', this.applyHtmlPlugin)
   }
 
   /**
@@ -168,8 +155,7 @@ export default class AutoDllPlugin extends Tapable {
       callback()
     } else {
       const timestamp = compiler.contextTimestamps
-            && compiler.contextTimestamps[this.pkgPath]
-
+            && compiler.contextTimestamps.get(this.pkgPath)
       if(timestamp && !this.timestamp) {
         /**
          * this case used for save timestamp, just hack
@@ -259,20 +245,19 @@ export default class AutoDllPlugin extends Tapable {
       /**
        * apply to HtmlWebpackPlugin
        */
-      if(this.webpack4 && compilation.hooks.htmlWebpackPluginBeforeHtmlGeneration) {
-        /**
-         * @TODO: webpack4 supports
-         */
-      } else {
-        const htmlPluginHook = 'html-webpack-plugin-before-html-generation'
-        compilation.plugin(htmlPluginHook, appendToChunks)
+      const hook = compilation.hooks.htmlWebpackPluginBeforeHtmlGeneration
+      if(hook) {
+        hook.tapAsync(
+          'AutoDllPrependAssert',
+          appendToChunks
+        )
       }
 
       function appendToChunks(data: Object, callback: Function): void {
         if(data.plugin.options.inject) {
           data.assets.js = [
             '/' + fileName,
-              ...data.assets.js
+            ...data.assets.js
           ]
         }
 
@@ -280,7 +265,7 @@ export default class AutoDllPlugin extends Tapable {
           verdor: {
             entry: '/' + fileName
           },
-            ...data.assets.chunks
+          ...data.assets.chunks
         }
         callback(null, data)
       }
@@ -295,8 +280,7 @@ export default class AutoDllPlugin extends Tapable {
     const {
       output,
       cachename,
-      injectBabelPolyfill,
-      injectDevClientScript
+      injectBabelPolyfill
     } = this.options
     try {
       const cache = JSON.parse(fs.readFileSync(this.cachePath, 'utf-8'))
@@ -311,9 +295,6 @@ export default class AutoDllPlugin extends Tapable {
       /**
        * include clientScript or polyfills also
        */
-      if(injectDevClientScript) {
-        deps[IDENT_DEVCLIENT] = IDENT_DEVCLIENT
-      }
       if(injectBabelPolyfill) {
         deps[IDENT_POLYFILL] = IDENT_POLYFILL
       }
@@ -360,36 +341,23 @@ export default class AutoDllPlugin extends Tapable {
     /**
      * include clientScript or polyfills also
      */
-    if(this.installDevClientScript) {
-      bundles[IDENT_DEVCLIENT] = IDENT_DEVCLIENT
-    }
     if(this.installBabelPolyfill) {
       bundles[IDENT_POLYFILL] = IDENT_POLYFILL
     }
 
     return class WriteCachePlugin {
-      description: string;
-
       constructor() {
-        this.description = 'WriteDllCachePlugin'
+        this.addToAssets = this.addToAssets.bind(this)
       }
 
       apply(compiler: Function) {
-        if(this.webpack4) {
-          /**
-           * register `emit` hook, generate cache file
-           * @TODO: webpack4 supports
-           */
-        } else {
-          compiler.plugin('emit', this.addToAssets.bind(this))
-        }
+        compiler.hooks.emit.tap('AutoDllWriteCachePlugin', this.addToAssets)
       }
 
-      addToAssets(compilation: Compilation, callback: Function): void {
+      addToAssets(compilation: Compilation): void {
         compilation.assets[cachename] = new RawSource(
           JSON.stringify(bundles)
         )
-        callback()
       }
     }
   }
@@ -405,34 +373,12 @@ export default class AutoDllPlugin extends Tapable {
       output,
       manifest,
       makeOptions,
-      injectBabelPolyfill,
-      injectDevClientScript,
-      host,
-      port
+      injectBabelPolyfill
     } = this.options
 
     let deps = [...this.deps]
 
-    this.installDevClientScript = false
     this.installBabelPolyfill = false
-
-    /**
-     * inject webpack-dev-serser/client
-     * test webpack-dev-server was installed first
-     */
-    if(injectDevClientScript) {
-      if(!isInstalled('webpack-dev-server')) {
-        this._log('warn', `Can't find module 'webpack-dev-server'`)
-      } else {
-        const suffix = setupHostPort(
-          host,
-          port,
-          this.webpackOptions.devServer
-        ).join(':')
-        deps.unshift(`webpack-dev-server/client?http://${suffix}`)
-        this.installDevClientScript = true
-      }
-    }
 
     /**
      * inject @babel/polyfill or babel-polyfill

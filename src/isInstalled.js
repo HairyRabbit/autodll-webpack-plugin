@@ -6,7 +6,7 @@
 
 export default function isInstalled(name: string): boolean {
   try {
-    require.resolve(name)
+    __non_webpack_require__.resolve(name)
     return true
   } catch(err) {
     return false

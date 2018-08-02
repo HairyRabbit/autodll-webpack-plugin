@@ -4,8 +4,8 @@
     "license": "UNLICENSED",
     "devDependencies": {
         "@babel/polyfill": "^7.0.0-beta.39",
-        "webpack": "^3.10.0",
-        "webpack-dev-server": "^2.11.1"
+        "webpack": "latest",
+        "webpack-dev-server": "latest"
     },
     "dependencies": {
         "react": "^16.2.0"

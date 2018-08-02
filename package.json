@@ -4,18 +4,15 @@
   "description": "Make dll first",
   "main": "lib/index.js",
   "scripts": {
-    "start": "yarn build -w",
-    "test": "jest",
-    "test:type": "flow check",
-    "test:co": "jest --coverage",
-    "pretest:spec": "yarn build",
-    "test:spec": "cross-env DEBUG=true sh specs/test.sh",
-    "clean": "rm lib -rf",
-    "clean:type": "rm flow-typed -rf",
-    "build": "cross-env NODE_ENV=development rollup -c",
-    "build:prod": "yarn clean && cross-env NODE_ENV=production rollup -c",
-    "build:type": "yarn clean:type && mkdir flow-typed && flow gen-flow-files src/index.js > flow-typed/modules.js",
-    "prepublish": "yarn test:co && yarn test:type && yarn build:prod"
+    "start": "npm run build -w",
+    "test": "npx jest",
+    "type": "npx flow check",
+    "test:co": "npx jest --coverage",
+    "pretest:spec": "cross-env DEBUG=true npm run build",
+    "test:spec": "sh specs/test.sh",
+    "prebuild": "rm lib -rf",
+    "build": "cross-env NODE_ENV=production npx webpack -r esm",
+    "prepublishOnly": "npm run test:co && npm run type && npm run build"
   },
   "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
   "keywords": [],
@@ -29,33 +26,29 @@
   ],
   "homepage": "https://github.com/HairyRabbit/autodll-webpack-plugin#readme",
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.36",
-    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.36",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.36",
-    "@babel/plugin-syntax-dynamic-import": "^7.0.0-beta.36",
-    "@babel/preset-env": "^7.0.0-beta.36",
-    "@babel/preset-flow": "^7.0.0-beta.36",
-    "babel-core": "7.0.0-bridge.0",
-    "babel-jest": "^22.0.4",
-    "babel-loader": "^7.1.2",
-    "flow-bin": "^0.65.0",
-    "jest": "^22.0.4",
-    "rollup": "^0.53.1",
-    "rollup-plugin-babel": "^4.0.0-beta.1",
-    "rollup-plugin-commonjs": "^8.3.0",
-    "rollup-plugin-json": "^2.3.0",
-    "rollup-plugin-node-resolve": "^3.0.2",
-    "rollup-plugin-uglify": "^2.0.1",
-    "rollup-plugin-uglify-es": "^0.0.1",
-    "webpack": "^3.10.0",
-    "webpack-cli": "^2.0.2",
-    "webpack-dev-server": "^2.11.1"
+    "@babel/core": "^7.0.0-beta.55",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.55",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.55",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0-beta.55",
+    "@babel/preset-env": "^7.0.0-beta.55",
+    "@babel/preset-flow": "^7.0.0-beta.55",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.4.2",
+    "babel-loader": "^8.0.0-beta.4",
+    "esm": "^3.0.72",
+    "flow-bin": "^0.77.0",
+    "jest": "^23.2.0",
+    "webpack": "^4.16.3",
+    "webpack-cli": "^3.1.0"
   },
   "peerDependencies": {
-    "webpack": "^2 || ^3"
+    "webpack": "^4"
   },
   "dependencies": {
     "tapable": "^1.0.0-beta.5",
     "webpack-sources": "^1.1.0"
+  },
+  "jest": {
+    "testURL": "http://localhost/"
   }
 }

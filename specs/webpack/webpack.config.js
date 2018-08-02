@@ -1,7 +1,9 @@
 const AutoDllPlugin = require('../../lib').default
 const path = require('path')
+const webpack = require('webpack')
 
 module.exports = {
+  mode: 'development',
   entry: path.resolve(__dirname, './a.js'),
   context: __dirname,
   output: {
@@ -9,6 +11,8 @@ module.exports = {
     filename: '[name].js'
   },
   plugins: [
-    new AutoDllPlugin()
+    new AutoDllPlugin({
+      watch: true
+    })
   ]
 }

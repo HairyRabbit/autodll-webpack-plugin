@@ -24,9 +24,6 @@ export type Options = {
   include: [],
   exclude: [],
   injectBabelPolyfill: boolean,
-  injectDevClientScript: boolean,
-  host: string,
-  port: string,
   watch: boolean
 }
 
