@@ -10,6 +10,7 @@ export default function collectVersions(deps: Array<string>,
                                         context: string): { [name: string]: string } {
   return deps.reduce((acc, dep) => {
     const depPath = path.resolve(context, 'node_modules', dep, 'package.json')
+    // $FlowFixMe
     const version = __non_webpack_require__(depPath).version
     acc[dep] = version
     return acc

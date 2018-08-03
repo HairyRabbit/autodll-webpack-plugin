@@ -346,6 +346,8 @@ export default class AutoDllPlugin extends Tapable {
     }
 
     return class WriteCachePlugin {
+      addToAssets: Function
+
       constructor() {
         this.addToAssets = this.addToAssets.bind(this)
       }

@@ -6,6 +6,7 @@
 
 export default function isInstalled(name: string): boolean {
   try {
+    // $FlowFixMe
     __non_webpack_require__.resolve(name)
     return true
   } catch(err) {

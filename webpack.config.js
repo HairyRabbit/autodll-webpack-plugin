@@ -20,12 +20,6 @@ export default {
   optimization: {
     minimize: false
   },
-  plugins: [
-    new EnvironmentPlugin([
-      'NODE_ENV',
-      'DEBUG'
-    ])
-  ],
   externals: [
     'webpack',
     'tapable',

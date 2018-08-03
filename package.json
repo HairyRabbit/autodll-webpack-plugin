@@ -5,14 +5,13 @@
   "main": "lib/index.js",
   "scripts": {
     "start": "npm run build -w",
-    "test": "npx jest",
+    "test": "npx mocha -r esm -r @babel/register",
     "type": "npx flow check",
-    "test:co": "npx jest --coverage",
     "pretest:spec": "cross-env DEBUG=true npm run build",
     "test:spec": "sh specs/test.sh",
     "prebuild": "rm lib -rf",
     "build": "cross-env NODE_ENV=production npx webpack -r esm",
-    "prepublishOnly": "npm run test:co && npm run type && npm run build"
+    "prepublishOnly": "npm run type && npm run build"
   },
   "repository": "git+https://github.com/HairyRabbit/autodll-webpack-plugin.git",
   "keywords": [],
@@ -32,12 +31,14 @@
     "@babel/plugin-syntax-dynamic-import": "^7.0.0-beta.55",
     "@babel/preset-env": "^7.0.0-beta.55",
     "@babel/preset-flow": "^7.0.0-beta.55",
+    "@babel/register": "^7.0.0-beta.55",
     "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^23.4.2",
     "babel-loader": "^8.0.0-beta.4",
     "esm": "^3.0.72",
     "flow-bin": "^0.77.0",
     "jest": "^23.2.0",
+    "mocha": "^5.2.0",
     "webpack": "^4.16.3",
     "webpack-cli": "^3.1.0"
   },
