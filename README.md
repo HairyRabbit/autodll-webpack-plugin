@@ -14,7 +14,7 @@ module.exports = {
   plugins: [
     // should after html-webpack-plugin
     new HtmlWebpackPlugin(),
-    new AutoDllwebpackplugin()
+    new AutoDllwebpackplugin({ ...options /* see below */ })
   ]
 }
 ```
