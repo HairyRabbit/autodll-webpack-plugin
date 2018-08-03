@@ -4,34 +4,37 @@ cd specs
 
 # cd basic
 # rm -rf .dll
-# yarn
-# yarn webpack
+# npm ci
+# npx webpack
 # cd ..
 
-cd webpack3
-rm -rf .dll
-yarn
-yarn webpack-dev-server
-cd ..
-
-# cd webpack3
-# yarn
-# yarn webpack-dev-server
+# cd webpack
+# rm -rf .dll
+# npm i
+# npx webpack-dev-server
 # cd ..
 
+# watch dependencies change
+# cd webpack
+# npm i
+# npx webpack-dev-server
+# cd ..
+
+# supports other type dependencies like ".css"
 # cd css-loader
-# yarn
-# yarn webpack --watch
+# npm i
+# npx webpack
 # cd ..
 
+# supports inject @babel/polyfill
 # cd inject
 # rm -rf .dll
-# yarn
-# yarn webpack-dev-server
+# npm i
+# npx webpack
 # cd ..
 
 # cd inject-html
 # rm -rf .dll
-# yarn
-# yarn webpack-dev-server
+# npm i
+# npx webpack-dev-server
 # cd ..

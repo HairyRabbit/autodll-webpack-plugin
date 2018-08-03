@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "license": "UNLICENSED",
     "devDependencies": {
-        "webpack": "^3.10.0"
+        "webpack": "^4"
     },
     "dependencies": {
         "jquery": "^3.3.1",

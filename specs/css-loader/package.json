@@ -3,11 +3,11 @@
     "version": "0.0.0",
     "license": "UNLICENSED",
     "devDependencies": {
-        "css-loader": "^0.28.9",
-        "style-loader": "^0.20.1",
-        "webpack": "^3.10.0"
+        "css-loader": "latest",
+        "style-loader": "latest",
+        "webpack": "latest"
     },
     "dependencies": {
-        "normalize.css": "^7.0.0"
+        "normalize.css": "latest"
     }
 }
