@@ -1,6 +1,6 @@
 {
   "name": "@rabbitcc/autodll-webpack-plugin",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Make dll first",
   "main": "lib/index.js",
   "scripts": {
