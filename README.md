@@ -12,6 +12,8 @@ const AutoDllWebpackPlugin = require('@rabbitcc/autodll-webpack-plugin')
 module.exports = {
   // webpack config options...
   plugins: [
+    // should after html-webpack-plugin
+    new HtmlWebpackPlugin(),
     new AutoDllwebpackplugin()
   ]
 }
