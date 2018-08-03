@@ -1,10 +1,8 @@
-<div alert="center">
-  <img src="https://raw.githubusercontent.com/HairyRabbit/media/master/Rabbit-Simple.svg?sanitize=true" alt="Logo" />
-</div>
-
 # autodll-webpack-plugin
 
 Make dll first, let webpack build fast.
+
+Now only supports webpack4
 
 ## Usage
 
@@ -62,14 +60,6 @@ type Options = {
    *
    * Note: this feature require `.babelrc` set 'preset-env.useBuiltins' to 'entry'.
    */
-  injectBabelPolyfill: boolean = false,
-  /**
-   * perpend 'webpack-dev-server/client' to entry. By default, the options 'host'
-   * and 'port' was inherit from 'devServer' options, or failback to
-   * use 'http://localhost' and '8080' as the default value.
-   */
-  injectDevClientScript: boolean = false,
-  host: string = 'localhost',
-  port: string = '8080'
+  injectBabelPolyfill: boolean = false
 }
 ```
