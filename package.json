@@ -32,12 +32,9 @@
     "@babel/preset-env": "^7.0.0-beta.55",
     "@babel/preset-flow": "^7.0.0-beta.55",
     "@babel/register": "^7.0.0-beta.55",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^23.4.2",
     "babel-loader": "^8.0.0-beta.4",
     "esm": "^3.0.72",
     "flow-bin": "^0.77.0",
-    "jest": "^23.2.0",
     "mocha": "^5.2.0",
     "webpack": "^4.16.3",
     "webpack-cli": "^3.1.0"
@@ -48,8 +45,5 @@
   "dependencies": {
     "tapable": "^1.0.0-beta.5",
     "webpack-sources": "^1.1.0"
-  },
-  "jest": {
-    "testURL": "http://localhost/"
   }
 }
